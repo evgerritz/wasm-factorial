@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en-us">
+    <head> 
+        <title>521 Reading Assignment: Wasm Factorial</title>
+        <script src="factorial.js"></script>
+    </head> 
+    <body>
+        <script>
+            let wasm_factorial = Module.cwrap(
+                "factorial",
+                "number",
+                "number"
+            );
+
+            let my_wasm_factorial = Module.cwrap(
+                "my_factorial",
+                "number",
+                "number"
+            );
+
+            function run_wasm_fact() {
+                let num = document.querySelector('#n').value;
+                let result = my_wasm_factorial(num);
+                document.getElementById("result").innerHTML = "Result: " + String(result);
+            }
+
+            function js_factorial(n) {
+                if (n == 0) {
+                    return 1;
+                } else {
+                    return n * js_factorial(n-1);
+                }
+            }
+
+            function run_time(f, n, num_trials) {
+                const start = performance.now();
+                for (let i of Array(num_trials)) {
+                    f(n);
+                }
+                const end = performance.now();
+                return (end-start)/num_trials;
+            }
+        </script>
+
+        <style>
+            table, th, td {
+              border: 1px solid black;
+              border-collapse: collapse;
+              padding: 3px;
+            }
+        </style>
+
+        <center>
+            <h1>Wasm Factorial</h1>
+            <input type="number" id="n"><br>
+            <button onclick="run_wasm_fact()">Calculate Factorial</button>
+            <p id="result" style="font-size: 20px">Result: </p>
+            <h3>JS vs Wasm Performance Comparison</h3>
+            <table style="">
+                <thead>
+                    <tr>
+                        <td></td>
+                        <td>1</td>
+                        <td>5</td>
+                        <td>10</td>
+                        <td>25</td>
+                        <td>50</td>
+                        <td>75</td>
+                        <td>100</td>
+                    </tr>
+                </thead>
+                <tbody id="timings">
+                </tbody>
+            </table>
+        </center>
+
+        <script>
+            let ns = [1, 5, 10, 25, 50, 75, 100];
+            function addRow(f, name) {
+                 const table = document.getElementById("timings");
+                 let row = table.insertRow();
+                 let cell = row.insertCell();
+                 cell.innerHTML = name;
+                 for (let n of ns) {
+                     let cell = row.insertCell();
+                     let time = run_time(f, n, 1000);
+                     cell.innerHTML = time.toFixed(5);
+                 }
+            }
+            Module.onRuntimeInitialized = () => {
+                addRow(js_factorial, "JS");
+                addRow(wasm_factorial, "Generated Wasm");
+                addRow(my_wasm_factorial, "Hand-written Wasm");
+            };
+        </script>
+    </body>
+</html>
+ 
